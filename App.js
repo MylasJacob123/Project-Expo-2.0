@@ -8,31 +8,33 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 
 export default function App() {
   const [message, setMessage] = useState("Happy Birthday!");
   const [fontSize, setFontSize] = useState(24);
   const [textColor, setTextColor] = useState("#000000");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(
+    require("./assets/birthday-card-image-01.jpg")
+  );
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  const templateArray = [
+    require("./assets/birthday-card-image-01.jpg"),
+    require("./assets/birthday-card-image-02.jpg"),
+    require("./assets/birthday-card-image-03.jpg"),
+    require("./assets/birthday-card-image-04.jpg"),
+  ];
 
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
+  const MAX_FONT_SIZE = 48;
+  const MIN_FONT_SIZE = 12;
+  const MAX_TEXT_LENGTH = 80;
 
   const changeFontSize = (type) => {
     setFontSize((prevSize) =>
-      type === "increase" ? prevSize + 2 : Math.max(12, prevSize - 2)
+      type === "increase"
+        ? Math.min(prevSize + 2, MAX_FONT_SIZE)
+        : Math.max(MIN_FONT_SIZE, prevSize - 2)
     );
   };
 
@@ -40,14 +42,22 @@ export default function App() {
     setTextColor(color);
   };
 
+  const handleMessageChange = (text) => {
+    if (text.length <= MAX_TEXT_LENGTH) {
+      setMessage(text);
+    }
+  };
+
+  const handleShare = () => {
+    Alert.alert("Share", "You can now share your birthday card!");
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Birthday Card Creator</Text>
 
       <View style={styles.card}>
-        {selectedImage && (
-          <Image source={{ uri: selectedImage }} style={styles.image} />
-        )}
+        <Image source={selectedImage} style={styles.image} />
         <Text style={[styles.cardText, { fontSize, color: textColor }]}>
           {message}
         </Text>
@@ -58,9 +68,8 @@ export default function App() {
           style={styles.input}
           placeholder="Enter birthday message"
           value={message}
-          onChangeText={setMessage}
+          onChangeText={handleMessageChange}
         />
-
         <View style={styles.row}>
           <Button
             title="Increase Font"
@@ -71,7 +80,6 @@ export default function App() {
             onPress={() => changeFontSize("decrease")}
           />
         </View>
-
         <View style={styles.row}>
           <TouchableOpacity
             onPress={() => changeTextColor("#000000")}
@@ -90,19 +98,39 @@ export default function App() {
             style={[styles.colorBox, { backgroundColor: "#32CD32" }]}
           />
         </View>
-
         <View style={styles.buttonRow}>
-          <Button title="Choose Image" onPress={pickImage} />
-          <Button
-            title="Reset Card"
-            color="red"
-            onPress={() => {
-              setSelectedImage(null);
-              setMessage("Happy Birthday!");
-              setFontSize(24);
-              setTextColor("#000000");
-            }}
-          />
+          <Text style={{ marginBottom: 10, textAlign: "center" }}>
+            Choose Background:
+          </Text>
+          <View style={styles.thumbnailRow}>
+            {templateArray.map((image, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedImage(image)}
+                style={styles.thumbnailContainer}
+              >
+                <Image source={image} style={styles.thumbnail} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+       
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonWrapper}>
+            <Button
+              title="Reset Card"
+              color="red"
+              onPress={() => {
+                setSelectedImage(templateArray[0]);
+                setMessage("Happy Birthday!");
+                setFontSize(24);
+                setTextColor("#000000");
+              }}
+            />
+          </View>
+          <View style={styles.buttonWrapper}>
+            <Button title="Share Card" color="blue" onPress={handleShare} />
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -157,6 +185,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     marginBottom: 20,
+    paddingBottom: 20,
   },
   input: {
     width: "100%",
@@ -179,8 +208,34 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   buttonRow: {
+    flexDirection: "column",
+    justifyContent: "center",
+    textAlign: "center",
+    marginTop: 10,
+  },
+  thumbnailRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  thumbnailContainer: {
+    margin: 5,
+  },
+  thumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 5,
+  },
+  buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 10,
+    marginTop: 15,
+    width: "100%",
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderRadius: 8,
+    overflow: "hidden",
   },
 });
